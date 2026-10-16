@@ -1,37 +1,39 @@
-name: Ultimate Autonomous YouTube Factory
+name: Nhà máy YouTube tự động tối thượng
 
 on:
   schedule:
-    - cron: '0 */6 * * *'  # Chạy tự động mỗi 6 tiếng
-  workflow_dispatch:      # Cho phép bấm nút chạy thủ công
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
 
 jobs:
   produce-and-evolve:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
+      - name: Kiểm tra kho lưu trữ
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Cài đặt Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
-      - name: Install System Dependencies
+      - name: Cài đặt các thành phần phụ thuộc của hệ thống
         run: |
           sudo apt-get update
           sudo apt-get install -y ffmpeg
 
-      - name: Install Python Dependencies
+      - name: Cài đặt các thư viện cần thiết của Python
         run: |
           python -m pip install --upgrade pip
-          pip install openai google-auth google-auth-oauthlib google-auth-httplib2 requests
+          pip install google-genai google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client requests
 
-      - name: Run YouTube Automation Engine
+      - name: Chạy công cụ tự động hóa YouTube
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
         run: |
-          echo "Thực thi script..."
-          # python main.py
+          python run_factory.py
           
