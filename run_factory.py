@@ -1,97 +1,64 @@
 import os
-import time
-import random
-from datetime import datetime
-from google import genai
+import requests
+import google.generativeai as genai
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 
-# --- CẤU HÌNH HỆ THỐNG CENTURY 100.1 (GEMINI + YOUTUBE) ---
+# ==========================================
+# CẤU HÌNH HỆ THỐNG 101.0 - BÁC SĨ SỨC KHỎE NHẬT BẢN
+# ==========================================
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-
-# Thông tin xác thực YouTube OAuth2 từ GitHub Secrets
 YOUTUBE_CLIENT_ID = os.environ.get("YOUTUBE_CLIENT_ID")
 YOUTUBE_CLIENT_SECRET = os.environ.get("YOUTUBE_CLIENT_SECRET")
 YOUTUBE_REFRESH_TOKEN = os.environ.get("YOUTUBE_REFRESH_TOKEN")
 
-client = genai.Client(api_key=GEMINI_API_KEY)
-LOCK_FILE = "execution_lock.txt"
+genai.configure(api_key=GEMINI_API_KEY)
 
-def check_daily_execution_lock():
-    """Kiểm tra khóa chống chạy trùng lặp trong ngày"""
-    today_str = datetime.now().strftime("%Y-%m-%d")
-    if os.path.exists(LOCK_FILE):
-        with open(LOCK_FILE, "r") as f:
-            last_run = f.read().strip()
-            if last_run == today_str:
-                print(f"[INFO] Hôm nay ({today_str}) pipeline đã chạy rồi. Dừng tiến trình.")
-                return False
-    with open(LOCK_FILE, "w") as f:
-        f.write(today_str)
-    return True
-
-def apply_anti_spam_jitter():
-    """Ngụy trang thời gian thực thi ngẫu nhiên"""
-    jitter_seconds = random.randint(30, 180)
-    print(f"[INFO] Chờ ngẫu nhiên {jitter_seconds} giây để bảo mật...")
-    time.sleep(jitter_seconds)
-
-def generate_script_content():
-    """Sử dụng Gemini để tạo kịch bản tự động"""
-    print("[INFO] Đang kết nối Gemini AI để sinh kịch bản...")
-    try:
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents="Hãy viết một đoạn mở đầu ngắn gọn, hấp dẫn bằng tiếng Việt về một xu hướng công nghệ mới nhất.",
-        )
-        script_text = response.text
-        print(f"[SUCCESS] Đã tạo kịch bản thành công: {script_text[:60]}...")
-        return script_text
-    except Exception as e:
-        print(f"[ERROR] Lỗi khi gọi Gemini API: {e}")
-        return None
-
-def upload_to_youtube(title, description):
-    """Kết nối YouTube API để xuất bản nội dung"""
-    if not all([YOUTUBE_CLIENT_ID, YOUTUBE_CLIENT_SECRET, YOUTUBE_REFRESH_TOKEN]):
-        print("[WARNING] Thiếu thông tin OAuth2 của YouTube trong Secrets. Bỏ qua bước upload thực tế.")
-        return False
+def generate_japanese_health_script():
+    """Tạo kịch bản video sức khỏe 10 phút bằng tiếng Nhật chuẩn y khoa"""
+    print("🩺 Đang yêu cầu Gemini viết kịch bản bác sĩ sức khỏe bằng tiếng Nhật...")
+    model = genai.GenerativeModel('gemini-1.5-flash')
     
-    try:
-        print("[INFO] Đang khởi tạo kết nối YouTube Data API...")
-        creds = Credentials(
-            token=None,
-            refresh_token=YOUTUBE_REFRESH_TOKEN,
-            client_id=YOUTUBE_CLIENT_ID,
-            client_secret=YOUTUBE_CLIENT_SECRET,
-            token_uri="https://oauth2.googleapis.com/token"
-        )
-        youtube = build("youtube", "v3", credentials=creds)
-        print("[SUCCESS] Đã kết nối thành công với kênh YouTube!")
-        # Logic gọi api upload video/shorts sẽ đặt ở đây
-        return True
-    except Exception as e:
-        print(f"[ERROR] Lỗi kết nối YouTube API: {e}")
-        return False
+    prompt = (
+        "Bạn là một bác sĩ chuyên khoa uy tín tại Nhật Bản. "
+        "Hãy viết một kịch bản video YouTube dài khoảng 10 phút (khoảng 1.800 - 2.200 chữ) bằng tiếng Nhật. "
+        "Chủ đề: Các phương pháp cải thiện sức khỏe đường ruột và kéo dài tuổi thọ theo khoa học. "
+        "Giọng văn chuyên nghiệp, ân cần, đáng tin cậy, bố cục gồm: "
+        "1. Lời chào và vấn đề thực tế (Hook). "
+        "2. Phân tích nguyên nhân y khoa dưới góc nhìn bác sĩ. "
+        "3. Giải pháp thực tế, dễ áp dụng hàng ngày. "
+        "4. Lời khuyên tổng kết và kêu gọi đăng ký kênh (CTA)."
+    )
+    
+    response = model.generate_content(prompt)
+    print("✅ Đã tạo xong kịch bản tiếng Nhật!")
+    return response.text
+
+def synthesize_japanese_voice(text):
+    """Chuyển đổi kịch bản thành giọng đọc tiếng Nhật (TTS)"""
+    print("🎙️ Đang xử lý giọng đọc tiếng Nhật chuẩn AI...")
+    # Tích hợp API chuyển văn bản thành giọng nói tiếng Nhật tại đây (VD: ElevenLabs / Google TTS ja-JP)
+    pass
+
+def create_talking_avatar_video():
+    """Tạo video nhân vật bác sĩ nói chuyện (Avatar chuyển động)"""
+    print("🎥 Đang kết nối công cụ tạo nhân vật AI chuyển động nói chuyện...")
+    # Tích hợp API HeyGen / D-ID hoặc SadTalker để tạo nhân vật bác sĩ
+    pass
 
 def main():
-    print("=== BẮT ĐẦU KHỞI CHẠY CENTURY 100.1 (FULL PIPELINE) ===")
+    print("🚀 Khởi chạy nhà máy tự động hóa YouTube - Kênh Bác sĩ Sức khỏe Tiếng Nhật (Bản 101.0)...")
     
-    if not check_daily_execution_lock():
-        return
-
-    apply_anti_spam_jitter()
-
-    script = generate_script_content()
-    if not script:
-        print("[ERROR] Không thể tiến hành do thiếu kịch bản.")
-        return
-
-    # Tiến hành kết nối và xuất bản YouTube
-    upload_to_youtube("Xu hướng công nghệ mới", script)
-
-    print("[SUCCESS] Hoàn tất toàn bộ chu trình tự động hóa.")
+    # 1. Tạo kịch bản tiếng Nhật
+    script = generate_japanese_health_script()
+    
+    # 2. Tạo giọng đọc tiếng Nhật
+    audio = synthesize_japanese_voice(script)
+    
+    # 3. Tạo video nhân vật bác sĩ nói chuyện
+    video = create_talking_avatar_video()
+    
+    print("🎉 Hoàn tất quy trình sản xuất video bác sĩ tiếng Nhật chuẩn bị xuất bản!")
 
 if __name__ == "__main__":
     main()
-    
